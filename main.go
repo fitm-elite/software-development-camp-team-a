@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/fitm-elite/elebs/command"
+	"github.com/fitm-elite/elebs/packages/linebot"
 	"github.com/fitm-elite/elebs/packages/logger"
 	"github.com/fitm-elite/elebs/packages/minio"
 	"github.com/fitm-elite/elebs/packages/timezone"
@@ -24,20 +25,26 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to load environment variables")
 	}
 
-	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
-	minioAccessKeyID := os.Getenv("MINIO_ACCESS_KEY_ID")
-	minioSecretAccessKey := os.Getenv("MINIO_SECRET_ACCESS_KEY")
 	minioClient, err := minio.New(
-		minio.WithEndpoint(minioEndpoint),
-		minio.WithAccessKeyID(minioAccessKeyID),
-		minio.WithSecretAccessKey(minioSecretAccessKey),
+		minio.WithEndpoint(os.Getenv("MINIO_ENDPOINT")),
+		minio.WithAccessKeyID(os.Getenv("MINIO_ACCESS_KEY_ID")),
+		minio.WithSecretAccessKey(os.Getenv("MINIO_SECRET_ACCESS_KEY")),
 		minio.WithUseSSL(true),
 	)
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to create MinIO client")
 	}
 
+	messagingApi, messagingApiBlob, err := linebot.New(
+		linebot.WithMessagingApi(), linebot.WithMessagingApiBlob(),
+	)
+	if err != nil {
+		log.Panic().Err(err).Msg("failed to create LineBot client")
+	}
+
 	_ = minioClient
+	_ = messagingApi
+	_ = messagingApiBlob
 
 	if err = command.Execute(); err != nil {
 		log.Panic().Err(err).Msg("failed to execute command")
