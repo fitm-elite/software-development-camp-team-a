@@ -68,7 +68,7 @@ func New(options ...OptionFunc) (*messaging_api.MessagingApiAPI, *messaging_api.
 		}
 	}
 
-	if properties.messagingApi == nil || properties.messagingApiBlob == nil {
+	if properties.messagingApi == nil && properties.messagingApiBlob == nil {
 		return nil, nil, ErrMessagingApiNil
 	}
 
