@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/fitm-elite/elebs/command"
+	localContext "github.com/fitm-elite/elebs/packages/context"
 	"github.com/fitm-elite/elebs/packages/linebot"
 	"github.com/fitm-elite/elebs/packages/logger"
 	"github.com/fitm-elite/elebs/packages/minio"
@@ -17,6 +19,7 @@ import (
 // main is the entry point of the application.
 func main() {
 	var err error
+	ctx := context.Background()
 
 	time.Local = timezone.NewAsiaBangkok()
 	log.Logger = logger.NewZerolog()
@@ -42,11 +45,11 @@ func main() {
 		log.Panic().Err(err).Msg("failed to create LineBot client")
 	}
 
-	_ = minioClient
-	_ = messagingApi
-	_ = messagingApiBlob
+	ctx = context.WithValue(ctx, localContext.MinioKeyContextKey, minioClient)
+	ctx = context.WithValue(ctx, localContext.MessagingApiContextKey, messagingApi)
+	ctx = context.WithValue(ctx, localContext.MessagingApiBlobContextKey, messagingApiBlob)
 
-	if err = command.Execute(); err != nil {
+	if err = command.Execute(ctx); err != nil {
 		log.Panic().Err(err).Msg("failed to execute command")
 	}
 }

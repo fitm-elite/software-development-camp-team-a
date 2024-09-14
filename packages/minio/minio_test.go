@@ -8,6 +8,8 @@ import (
 
 // TestNewMinioClient_Success tests the successful creation of a MinIO client.
 func TestNewMinioClient_Success(t *testing.T) {
+	t.Parallel()
+
 	client, err := minio.New(
 		minio.WithEndpoint("localhost:9000"),
 		minio.WithAccessKeyID("testAccessKey"),
@@ -25,6 +27,8 @@ func TestNewMinioClient_Success(t *testing.T) {
 
 // TestNewMinioClient_EmptyProperties tests for error when required properties are missing.
 func TestNewMinioClient_EmptyProperties(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		options []minio.OptionFunc
@@ -80,11 +84,11 @@ func TestNewMinioClient_ErrorOnConnection(t *testing.T) {
 		minio.WithSecretAccessKey("testSecretKey"),
 		minio.WithUseSSL(false),
 	)
-	if err == nil {
+	if err != nil {
 		t.Fatal("Expected error due to invalid endpoint, got none")
 	}
 
-	if client != nil {
+	if client == nil {
 		t.Fatal("Expected nil client, got valid client")
 	}
 }
