@@ -12,6 +12,8 @@ import (
 )
 
 func TestWithMessagingApi(t *testing.T) {
+	t.Parallel()
+
 	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "test_token")
 	defer os.Unsetenv("LINE_CHANNEL_ACCESS_TOKEN")
 
@@ -25,6 +27,8 @@ func TestWithMessagingApi(t *testing.T) {
 }
 
 func TestWithMessagingApiBlob(t *testing.T) {
+	t.Parallel()
+
 	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "test_token")
 	defer os.Unsetenv("LINE_CHANNEL_ACCESS_TOKEN")
 
@@ -38,7 +42,9 @@ func TestWithMessagingApiBlob(t *testing.T) {
 }
 
 func TestNew_Success(t *testing.T) {
-	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "test_token")
+	t.Parallel()
+
+	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "1NFRUnP5TIKLsSOrCoqPn+fFEaEo+9wM3iTtc4LB6ylMXb6ylOM0tEXgsjsSUMY0MIPjHxunujolGjaJg+DxLBSpLmQl4+3SEbOyafvrtyuEYsvcN2Ghi6emEbNmx199Pbs5AG05102YC2URNI2pjAdB04t89/1O/w1cDnyilFU=")
 	defer os.Unsetenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 	messagingApi, messagingApiBlob, err := linebot.New(
@@ -51,12 +57,16 @@ func TestNew_Success(t *testing.T) {
 }
 
 func TestNew_ErrorMessagingApiNil(t *testing.T) {
+	t.Parallel()
+
 	_, _, err := linebot.New()
 
 	assert.ErrorIs(t, err, linebot.ErrMessagingApiNil)
 }
 
 func TestNew_ErrorInOptionFunc(t *testing.T) {
+	t.Parallel()
+
 	faultyOption := func(properties *linebot.Properties) error {
 		return errors.New("mock error")
 	}

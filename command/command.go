@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,19 @@ var root = &cobra.Command{
 }
 
 // Execute runs the root command.
-func Execute() error {
+func Execute(ctx context.Context) error {
+	use := &cobra.Command{
+		Use:   "use",
+		Short: "Use a csv file to scrape data",
+		Long:  "Use a csv file to scrape data for calculating the electric bill and push message to linebot.",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Use command")
+			fmt.Println(args)
+		},
+	}
+
+	root.AddCommand(use)
+
 	return root.Execute()
 }
