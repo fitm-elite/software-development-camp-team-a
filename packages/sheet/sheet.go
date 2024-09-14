@@ -51,8 +51,14 @@ func New(options ...OptionFunc) (*Sheet, error) {
 }
 
 // Read reads the sheet.
-func (s *Sheet) Read() *csv.Reader {
-	return csv.NewReader(s.file)
+func (s *Sheet) Read() (records [][]string, err error) {
+	reader := csv.NewReader(s.file)
+	records, err = reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
 }
 
 // Close closes the sheet.

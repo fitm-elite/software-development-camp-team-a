@@ -3,16 +3,12 @@ package command
 import (
 	"context"
 	"fmt"
-<<<<<<< Updated upstream
-	"io"
-=======
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
->>>>>>> Stashed changes
 
 	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
 	"github.com/minio/minio-go/v7"
@@ -57,20 +53,6 @@ func Execute(ctx context.Context) error {
 				}
 			}()
 
-<<<<<<< Updated upstream
-			reader := file.Read()
-			for {
-				record, err := reader.Read()
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					log.Error().Err(err).Msg("failed to read CSV file")
-					break
-				}
-				fmt.Println(record)
-			}
-=======
 			records, err := file.Read()
 			if err != nil {
 				log.Fatal().Err(err).Msg("failed to read CSV file")
@@ -87,14 +69,6 @@ func Execute(ctx context.Context) error {
 				log.Error().Err(err).Msg("failed to get messaging api")
 				return
 			}
-
-			messagingApiBlob, ok := ctx.Value(localContext.MessagingApiBlobContextKey).(*messaging_api.MessagingApiBlobAPI)
-			if !ok {
-				log.Error().Err(err).Msg("failed to get messaging api")
-				return
-			}
-
-			_ = messagingApiBlob
 
 			var wg sync.WaitGroup
 			for _, record := range records[1:] {
@@ -209,7 +183,6 @@ func Execute(ctx context.Context) error {
 			}
 
 			wg.Wait()
->>>>>>> Stashed changes
 		},
 	}
 
