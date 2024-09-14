@@ -17,7 +17,6 @@ linters:
         - unused
 
         # Our own extras:
-        - gofumpt
         - nolintlint # lints nolint directives
 
 linters-settings:
@@ -42,10 +41,3 @@ issues:
     # Don't ignore some of the issues that golangci-lint considers okay.
     # This includes documenting all exported entities.
     exclude-use-default: false
-
-    exclude-rules:
-        # Ignore logger.Sync() errcheck failures in example_test.go
-        # since those are intended to be uncomplicated examples.
-        - linters: [errcheck]
-          path: example_test.go
-          text: "Error return value of `logger.Sync` is not checked"
