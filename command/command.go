@@ -3,8 +3,14 @@ package command
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+)
+
+var (
+	ErrInvalidFileExtension = fmt.Errorf("invalid file extension")
 )
 
 // root is the root command object.
@@ -20,13 +26,15 @@ var root = &cobra.Command{
 // Execute runs the root command.
 func Execute(ctx context.Context) error {
 	use := &cobra.Command{
-		Use:   "use",
+		Use:   "use [file.csv]",
 		Short: "Use a csv file to scrape data",
 		Long:  "Use a csv file to scrape data for calculating the electric bill and push message to linebot.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Use command")
-			fmt.Println(args)
+			extension := strings.Trim(args[0], ".")
+			if extension != "csv" {
+				log.Error().Err(ErrInvalidFileExtension).Msg("file extension must be csv")
+			}
 		},
 	}
 
