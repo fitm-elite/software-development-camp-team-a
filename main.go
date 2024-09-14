@@ -38,8 +38,8 @@ func main() {
 		log.Panic().Err(err).Msg("failed to create MinIO client")
 	}
 
-	messagingApi, messagingApiBlob, err := linebot.New(
-		linebot.WithMessagingApi(), linebot.WithMessagingApiBlob(),
+	messagingApi, err := linebot.New(
+		linebot.WithMessagingApi(),
 	)
 	if err != nil {
 		log.Panic().Err(err).Msg("failed to create LineBot client")
@@ -47,7 +47,6 @@ func main() {
 
 	ctx = context.WithValue(ctx, localContext.MinioKeyContextKey, minioClient)
 	ctx = context.WithValue(ctx, localContext.MessagingApiContextKey, messagingApi)
-	ctx = context.WithValue(ctx, localContext.MessagingApiBlobContextKey, messagingApiBlob)
 
 	if err = command.Execute(ctx); err != nil {
 		log.Panic().Err(err).Msg("failed to execute command")
