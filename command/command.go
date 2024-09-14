@@ -98,6 +98,10 @@ func Execute(ctx context.Context) error {
 				go func(record []string) {
 					defer validateWg.Done()
 
+					if len(record) != 5 {
+						log.Fatal().Msg("record length is not equal to 5")
+					}
+
 					if record[0] == "" || record[1] == "" || record[2] == "" || record[3] == "" || record[4] == "" {
 						log.Fatal().Msg("record cannot be empty")
 					}
@@ -109,18 +113,15 @@ func Execute(ctx context.Context) error {
 					lineIds := strings.Split(record[1], ",")
 					if len(lineIds) == 0 {
 						log.Fatal().Msg("line ids are empty")
-						return
 					}
 
 					residents, err := strconv.ParseUint(record[4], 10, 64)
 					if err != nil {
 						log.Fatal().Err(err).Msg("failed to parse uint")
-						return
 					}
 
 					if len(lineIds) != int(residents) {
 						log.Fatal().Msg("line ids and residents are not equal")
-						return
 					}
 				}(record)
 			}
