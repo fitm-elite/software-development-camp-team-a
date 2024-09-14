@@ -3,11 +3,25 @@ package command
 import (
 	"context"
 	"fmt"
+<<<<<<< Updated upstream
 	"io"
+=======
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+>>>>>>> Stashed changes
 
+	"github.com/line/line-bot-sdk-go/v8/linebot/messaging_api"
+	"github.com/minio/minio-go/v7"
 	"github.com/rs/zerolog/log"
+	"github.com/skip2/go-qrcode"
 	"github.com/spf13/cobra"
 
+	localContext "github.com/fitm-elite/elebs/packages/context"
+	"github.com/fitm-elite/elebs/packages/promptpay"
 	"github.com/fitm-elite/elebs/packages/sheet"
 )
 
@@ -43,6 +57,7 @@ func Execute(ctx context.Context) error {
 				}
 			}()
 
+<<<<<<< Updated upstream
 			reader := file.Read()
 			for {
 				record, err := reader.Read()
@@ -55,6 +70,146 @@ func Execute(ctx context.Context) error {
 				}
 				fmt.Println(record)
 			}
+=======
+			records, err := file.Read()
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to read CSV file")
+			}
+
+			minioClient, ok := ctx.Value(localContext.MinioKeyContextKey).(*minio.Client)
+			if !ok {
+				log.Error().Err(err).Msg("failed to get minio client")
+				return
+			}
+
+			messagingApi, ok := ctx.Value(localContext.MessagingApiContextKey).(*messaging_api.MessagingApiAPI)
+			if !ok {
+				log.Error().Err(err).Msg("failed to get messaging api")
+				return
+			}
+
+			messagingApiBlob, ok := ctx.Value(localContext.MessagingApiBlobContextKey).(*messaging_api.MessagingApiBlobAPI)
+			if !ok {
+				log.Error().Err(err).Msg("failed to get messaging api")
+				return
+			}
+
+			_ = messagingApiBlob
+
+			var wg sync.WaitGroup
+			for _, record := range records[1:] {
+				wg.Add(1)
+
+				go func(record []string) {
+					defer wg.Done()
+
+					lineIds := strings.Split(record[1], ",")
+
+					var rwg sync.WaitGroup
+					for _, lineId := range lineIds {
+						rwg.Add(1)
+
+						go func(lineId *string) {
+							defer rwg.Done()
+
+							profile, err := messagingApi.GetProfile(*lineId)
+							if err != nil {
+								log.Error().Err(err).Msg("failed to get profile")
+								return
+							}
+
+							billCost, err := strconv.ParseFloat(record[3], 64)
+							if err != nil {
+								log.Error().Err(err).Msg("failed to parse float")
+								return
+							}
+
+							residents, err := strconv.ParseUint(record[4], 10, 64)
+							if err != nil {
+								log.Error().Err(err).Msg("failed to parse uint")
+								return
+							}
+
+							promptPayId := "0641823735"
+							costDivided := billCost / float64(residents)
+
+							promptpay := promptpay.PromptPay{
+								PromptPayID: promptPayId,
+								Amount:      costDivided,
+							}
+							promptPayCrc, err := promptpay.Gen()
+							if err != nil {
+								log.Error().Err(err).Msg("failed to generate promptpay")
+								return
+							}
+
+							if err = qrcode.WriteFile(promptPayCrc, qrcode.Medium, 256, fmt.Sprintf("qrcode-%s.png", promptPayCrc)); err != nil {
+								log.Error().Err(err).Msg("failed to write file")
+								return
+							}
+
+							if _, err = minioClient.FPutObject(
+								ctx, "elebs",
+								fmt.Sprintf("qrcode-%s.png", promptPayCrc),
+								fmt.Sprintf("qrcode-%s.png", promptPayCrc),
+								minio.PutObjectOptions{},
+							); err != nil {
+								log.Error().Err(err).Msg("failed to put object")
+								return
+							}
+
+							if err := os.Remove(fmt.Sprintf("qrcode-%s.png", promptPayCrc)); err != nil {
+								log.Error().Err(err).Msg("failed to remove file")
+								return
+							}
+
+							urlParams := make(url.Values)
+							urlParams.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", fmt.Sprintf("qrcode-%s.png", promptPayCrc)))
+							presigned, err := minioClient.PresignedGetObject(ctx, "elebs", fmt.Sprintf("qrcode-%s.png", promptPayCrc), 7*time.Hour, urlParams)
+							if err != nil {
+								log.Error().Err(err).Msg("failed to presigned object")
+								return
+							}
+
+							if _, err = messagingApi.PushMessage(
+								&messaging_api.PushMessageRequest{
+									To: profile.UserId,
+									Messages: []messaging_api.MessageInterface{
+										&messaging_api.TextMessage{
+											Text: fmt.Sprintf("ค่าไฟฟ้าของคุณ %s คิดเป็น %.2f บาท โปรดชำระภายในวันที่ 25 ของทุกเดือน", profile.DisplayName, costDivided),
+										},
+									},
+								}, "",
+							); err != nil {
+								log.Error().Err(err).Msg("failed to push message")
+								return
+							}
+
+							if _, err = messagingApi.PushMessage(
+								&messaging_api.PushMessageRequest{
+									To: profile.UserId,
+									Messages: []messaging_api.MessageInterface{
+										&messaging_api.ImageMessage{
+											OriginalContentUrl: presigned.String(),
+											PreviewImageUrl:    presigned.String(),
+										},
+									},
+								},
+								"",
+							); err != nil {
+								log.Error().Err(err).Msg("failed to push message")
+								return
+							}
+
+						}(&lineId)
+
+						rwg.Wait()
+					}
+				}(record)
+			}
+
+			wg.Wait()
+>>>>>>> Stashed changes
 		},
 	}
 
