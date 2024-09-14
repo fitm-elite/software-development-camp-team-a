@@ -9,7 +9,7 @@ all: test
 
 # Linting tools
 lint:
-	golangci-lint tidy-lint license-lint
+	golangci-lint run
 
 # Run all tests with race detection and coverage
 test:
