@@ -4,6 +4,8 @@ import (
 	"encoding/csv"
 	"errors"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 // Errors of the sheet package.
@@ -51,8 +53,15 @@ func New(options ...OptionFunc) (*Sheet, error) {
 }
 
 // Read reads the sheet.
-func (s *Sheet) Read() *csv.Reader {
-	return csv.NewReader(s.file)
+func (s *Sheet) Read() ([][]string, error) {
+	reader := csv.NewReader(s.file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read CSV file")
+		return nil, err
+	}
+
+	return records, nil
 }
 
 // Close closes the sheet.

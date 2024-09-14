@@ -3,8 +3,6 @@ package command
 import (
 	"context"
 	"fmt"
-	"io"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -30,8 +28,7 @@ func Execute(ctx context.Context) error {
 		Long:  "Use a csv file to scrape data for calculating the electric bill and push message to linebot.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extension := strings.Split(args[0], ".")
-			if extension[len(extension)-1] != "csv" {
+			if ok := fileExtensionValidator(args); !ok {
 				log.Fatal().Err(sheet.ErrInvalidFileExtension).Msg("invalid file extension")
 			}
 
@@ -45,18 +42,33 @@ func Execute(ctx context.Context) error {
 				}
 			}()
 
-			reader := file.Read()
-			for {
-				record, err := reader.Read()
-				if err == io.EOF {
-					break
+			records, err := file.Read()
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to read CSV file")
+			}
+
+			for idx, record := range records {
+				if idx == 0 {
+					continue
 				}
-				if err != nil {
-					log.Error().Err(err).Msg("failed to read CSV file")
-					break
-				}
+
 				fmt.Println(record)
 			}
+
+			// reader := file.Read()
+			// for {
+			// 	reader.ReadAll()
+
+			// 	record, err := reader.Read()
+			// 	if err == io.EOF {
+			// 		break
+			// 	}
+			// 	if err != nil {
+			// 		log.Error().Err(err).Msg("failed to read CSV file")
+			// 		break
+			// 	}
+			// 	fmt.Println(record)
+			// }
 		},
 	}
 
