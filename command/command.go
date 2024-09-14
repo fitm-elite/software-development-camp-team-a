@@ -31,10 +31,12 @@ func Execute(ctx context.Context) error {
 		Long:  "Use a csv file to scrape data for calculating the electric bill and push message to linebot.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			extension := strings.Trim(args[0], ".")
-			if extension != "csv" {
+			extension := strings.Split(args[0], ".")
+
+			if extension[len(extension)-1] != "csv" {
 				log.Error().Err(ErrInvalidFileExtension).Msg("file extension must be csv")
 			}
+
 		},
 	}
 
