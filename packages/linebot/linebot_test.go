@@ -47,7 +47,7 @@ func TestWithMessagingApiBlob(t *testing.T) {
 func TestNew_Success(t *testing.T) {
 	t.Parallel()
 
-	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "test_token")
+	os.Setenv("LINE_CHANNEL_ACCESS_TOKEN", "1NFRUnP5TIKLsSOrCoqPn+fFEaEo+9wM3iTtc4LB6ylMXb6ylOM0tEXgsjsSUMY0MIPjHxunujolGjaJg+DxLBSpLmQl4+3SEbOyafvrtyuEYsvcN2Ghi6emEbNmx199Pbs5AG05102YC2URNI2pjAdB04t89/1O/w1cDnyilFU=")
 	defer os.Unsetenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 	messagingApi, messagingApiBlob, err := linebot.New(
