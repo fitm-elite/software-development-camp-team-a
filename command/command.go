@@ -3,14 +3,13 @@ package command
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-)
 
-var (
-	ErrInvalidFileExtension = fmt.Errorf("invalid file extension")
+	"github.com/fitm-elite/elebs/packages/sheet"
 )
 
 // root is the root command object.
@@ -32,11 +31,32 @@ func Execute(ctx context.Context) error {
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			extension := strings.Split(args[0], ".")
-
 			if extension[len(extension)-1] != "csv" {
-				log.Error().Err(ErrInvalidFileExtension).Msg("file extension must be csv")
+				log.Fatal().Err(sheet.ErrInvalidFileExtension).Msg("invalid file extension")
 			}
 
+			file, err := sheet.New(sheet.WithPath(args[0]))
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to open file")
+			}
+			defer func() {
+				if err := file.Close(); err != nil {
+					log.Fatal().Err(err).Msg("failed to close file")
+				}
+			}()
+
+			reader := file.Read()
+			for {
+				record, err := reader.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Error().Err(err).Msg("failed to read CSV file")
+					break
+				}
+				fmt.Println(record)
+			}
 		},
 	}
 
