@@ -4,7 +4,6 @@
 *.so
 .DS_Store
 .env
-*.csv
 elebs
 
 # Folders
