@@ -3,9 +3,9 @@ package command
 import (
 	"context"
 	"fmt"
-  
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,6 +22,25 @@ import (
 	"github.com/fitm-elite/elebs/packages/sheet"
 	"github.com/fitm-elite/elebs/packages/utility"
 )
+
+// rooms is a list of rooms in KMUTNB Dormitory, Prachinburi campus.
+var rooms []string = []string{
+	"200", "201", "202", "203", "204", "205", "206", "207", "208", "209",
+	"210", "211", "212", "213", "214", "215", "216", "217", "218", "219",
+	"220", "221", "222", "223", "224", "225", "226", "227",
+
+	"300", "301", "302", "303", "304", "305", "306", "307", "308", "309",
+	"310", "311", "312", "313", "314", "315", "316", "317", "318", "319",
+	"320", "321", "322", "323", "324", "325", "326", "327",
+
+	"400", "401", "402", "403", "404", "405", "406", "407", "408", "409",
+	"410", "411", "412", "413", "414", "415", "416", "417", "418", "419",
+	"420", "421", "422", "423", "424", "425", "426", "427",
+
+	"500", "501", "502", "503", "504", "505", "506", "507", "508", "509",
+	"510", "511", "512", "513", "514", "515", "516", "517", "518", "519",
+	"520", "521", "522", "523", "524", "525", "526", "527",
+}
 
 // root is the root command object.
 var root = &cobra.Command{
@@ -83,13 +102,8 @@ func Execute(ctx context.Context) error {
 						log.Fatal().Msg("record cannot be empty")
 					}
 
-					roomNumber, err := strconv.ParseInt(record[0], 10, 64)
-					if err != nil {
-						log.Fatal().Err(err).Msg("failed to parse int")
-					}
-
-					if roomNumber < 200 || roomNumber > 527 {
-						log.Fatal().Msg("room number is invalid")
+					if ok := slices.Contains(rooms, record[0]); !ok {
+						log.Fatal().Msg("room number is not valid")
 					}
 
 					lineIds := strings.Split(record[1], ",")
