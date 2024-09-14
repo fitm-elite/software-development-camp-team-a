@@ -19,6 +19,7 @@ import (
 	localContext "github.com/fitm-elite/elebs/packages/context"
 	"github.com/fitm-elite/elebs/packages/promptpay"
 	"github.com/fitm-elite/elebs/packages/sheet"
+	"github.com/fitm-elite/elebs/packages/utility"
 )
 
 // root is the root command object.
@@ -70,14 +71,65 @@ func Execute(ctx context.Context) error {
 				return
 			}
 
-			var wg sync.WaitGroup
+			var validateWg sync.WaitGroup
 			for _, record := range records[1:] {
-				wg.Add(1)
+				validateWg.Add(1)
 
 				go func(record []string) {
-					defer wg.Done()
+					defer validateWg.Done()
+
+					if record[0] == "" || record[1] == "" || record[2] == "" || record[3] == "" || record[4] == "" {
+						log.Fatal().Msg("record cannot be empty")
+					}
+
+					roomNumber, err := strconv.ParseInt(record[0], 10, 64)
+					if err != nil {
+						log.Fatal().Err(err).Msg("failed to parse int")
+					}
+
+					if roomNumber < 200 || roomNumber > 527 {
+						log.Fatal().Msg("room number is invalid")
+					}
 
 					lineIds := strings.Split(record[1], ",")
+					if len(lineIds) == 0 {
+						log.Fatal().Msg("line ids are empty")
+						return
+					}
+
+					residents, err := strconv.ParseUint(record[4], 10, 64)
+					if err != nil {
+						log.Fatal().Err(err).Msg("failed to parse uint")
+						return
+					}
+
+					if len(lineIds) != int(residents) {
+						log.Fatal().Msg("line ids and residents are not equal")
+						return
+					}
+				}(record)
+			}
+
+			validateWg.Wait()
+
+			var recordWg sync.WaitGroup
+			for _, record := range records[1:] {
+				recordWg.Add(1)
+
+				go func(record []string) {
+					defer recordWg.Done()
+
+					lineIds := strings.Split(record[1], ",")
+					if len(lineIds) == 0 {
+						log.Fatal().Msg("line ids are empty")
+						return
+					}
+
+					residents, err := strconv.ParseUint(record[4], 10, 64)
+					if err != nil {
+						log.Fatal().Err(err).Msg("failed to parse uint")
+						return
+					}
 
 					var rwg sync.WaitGroup
 					for _, lineId := range lineIds {
@@ -98,14 +150,8 @@ func Execute(ctx context.Context) error {
 								return
 							}
 
-							residents, err := strconv.ParseUint(record[4], 10, 64)
-							if err != nil {
-								log.Error().Err(err).Msg("failed to parse uint")
-								return
-							}
-
 							promptPayId := "0641823735"
-							costDivided := billCost / float64(residents)
+							costDivided := utility.CostDivider(billCost, int(residents))
 
 							promptpay := promptpay.PromptPay{
 								PromptPayID: promptPayId,
@@ -150,7 +196,7 @@ func Execute(ctx context.Context) error {
 									To: profile.UserId,
 									Messages: []messaging_api.MessageInterface{
 										&messaging_api.TextMessage{
-											Text: fmt.Sprintf("ค่าไฟฟ้าของคุณ %s คิดเป็น %.2f บาท โปรดชำระภายในวันที่ 25 ของทุกเดือน", profile.DisplayName, costDivided),
+											Text: fmt.Sprintf("ค่าไฟฟ้าของคุณ %s คิดเป็น %.2f บาท (จากทั้งหมด %.2f บาท) ณ ของวันที่ %v *โปรดชำระภายในวันที่ 25 ของทุกเดือน*", profile.DisplayName, costDivided, billCost, record[2]),
 										},
 									},
 								}, "",
@@ -176,13 +222,13 @@ func Execute(ctx context.Context) error {
 							}
 
 						}(&lineId)
-
-						rwg.Wait()
 					}
+
+					rwg.Wait()
 				}(record)
 			}
 
-			wg.Wait()
+			recordWg.Wait()
 		},
 	}
 
