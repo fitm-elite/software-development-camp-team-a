@@ -15,6 +15,15 @@ func TestNewSheet_Success(t *testing.T) {
 	}
 }
 
+func TestNewSheet_InvalidFileExtension(t *testing.T) {
+	t.Parallel()
+
+	_, err := sheet.New(sheet.WithPath("./../../example.txt"))
+	if err == nil {
+		t.Fatal("Expected an error, got nil")
+	}
+}
+
 func TestNewSheet_EmptyProperties(t *testing.T) {
 	t.Parallel()
 
