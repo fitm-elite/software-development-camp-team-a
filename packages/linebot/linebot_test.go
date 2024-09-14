@@ -1,3 +1,6 @@
+//go:build !codeanalysis
+// +build !codeanalysis
+
 package linebot_test
 
 import (

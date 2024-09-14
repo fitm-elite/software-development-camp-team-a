@@ -7,6 +7,10 @@ main:
 # Default target
 all: test
 
+# Linting tools
+lint:
+	golangci-lint run
+
 # Run all tests with race detection and coverage
 test:
 	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
