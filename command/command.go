@@ -3,8 +3,13 @@ package command
 import (
 	"context"
 	"fmt"
+	"io"
+	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	"github.com/fitm-elite/elebs/packages/sheet"
 )
 
 // root is the root command object.
@@ -20,13 +25,38 @@ var root = &cobra.Command{
 // Execute runs the root command.
 func Execute(ctx context.Context) error {
 	use := &cobra.Command{
-		Use:   "use",
+		Use:   "use [file.csv]",
 		Short: "Use a csv file to scrape data",
 		Long:  "Use a csv file to scrape data for calculating the electric bill and push message to linebot.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Use command")
-			fmt.Println(args)
+			extension := strings.Split(args[0], ".")
+			if extension[len(extension)-1] != "csv" {
+				log.Fatal().Err(sheet.ErrInvalidFileExtension).Msg("invalid file extension")
+			}
+
+			file, err := sheet.New(sheet.WithPath(args[0]))
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to open file")
+			}
+			defer func() {
+				if err := file.Close(); err != nil {
+					log.Fatal().Err(err).Msg("failed to close file")
+				}
+			}()
+
+			reader := file.Read()
+			for {
+				record, err := reader.Read()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Error().Err(err).Msg("failed to read CSV file")
+					break
+				}
+				fmt.Println(record)
+			}
 		},
 	}
 
